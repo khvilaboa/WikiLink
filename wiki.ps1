@@ -146,17 +146,25 @@ Function BreakDown {
 
 Function GetLinkedRoute {
 	Param (
-		[string] $idSrc,
-		[string] $idDst,
-		[Object[]] $arr,
-		[int] $lvl = 1
+		[string] $srcId,
+		[string] $dstId,
+		[Object[]] $routes
 	)
 	
-	$route = @($idSrc)
-	
 	foreach($item in $routes[1]) {
-		
+		if($item.getType().name -eq "String") {
+			if($item -eq $dstId) {
+				return $routes[0], $item
+			} #else { Write-Host("{0} <> {1}" -f $item, $dstId) }
+		} else {
+			$route = GetLinkedRoute $srcId $dstId $item
+			if($route) {
+				return @($routes[0]) + $route
+			}
+		}
 	}
+	
+	return $null
 }
 
 
@@ -180,32 +188,13 @@ while(-Not $linked -And $lvl -lt 5) {
 }
 
 if($linked) {
-	GetLinkedRoute $srcId $dstId $routes
+	$vRoute = GetLinkedRoute $srcId $dstId $routes
+	Write-Host ("Link found: {0}" -f ($vRoute -join " -> "))
 } else {
-	Write-Host ("nope ({0} levels)" -f $lvl)
+	Write-Host ("Link not found ({0} levels)" -f $lvl)
 }
 
 $routes.Length
-Exit
-#$p = @("hola", @("adios", @("taluh", @("t1", "t2", "t3")), "taotra"))
-
-$src[1] = @($src[1][1])
-BreakDown 1 $src $dst
-Write-Host "-----------"
-Write-Host -Object $src[1][0][1]
-Write-Host ($src | Format-List | Out-String)
-Exit
-
-
-
-# Get the minimal length among the arrays
-$minLen = 0
-if($src[1].Length -lt $dst[1].Length) {
-	$minLen = $src[1].Length
-} else {
-	$minLen = $dst[1].Length
-}
-
 
 
 
