@@ -13,4 +13,4 @@ Meaning:
 - SRC_URL: Source article (where it starts to search).
 - DST_URL: Destination article (the end of the chain).
 
-![<<Run test>>](http://i.imgur.com/O6sPKDq.png)
+![Run test](http://i.imgur.com/O6sPKDq.png)
