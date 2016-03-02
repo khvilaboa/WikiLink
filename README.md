@@ -1,7 +1,7 @@
 # WikiLink
 
 ## Description
-Script made in PowerShell that searches and shows the link between two articles of Wikipedia (it explores the intermediate links until find the destination url). 
+Script made in PowerShell that search and show the link between two articles of Wikipedia (it explores the intermediate links until find the destination url). 
 
 Why PowerShell? [~~Fate~~](http://i.imgur.com/d8TGXQg.png) Own will.
 
