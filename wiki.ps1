@@ -6,20 +6,22 @@
 #>
 
 Param (
-	[string] $srcUrl = "http://es.wikipedia.org/wiki/Jalea",
-	[string] $dstUrl = "https://es.wikipedia.org/wiki/Cola_de_pescado"
+	[string] $srcUrl = "http://es.wikipedia.org/wiki/Gelatina",
+	[string] $dstUrl = "https://es.wikipedia.org/wiki/Sustancia"
 )
 
-
+# ----------
 # Functions
+# ----------
 
 Function GetIds {
 	Param (
 		[string] $url
 	)
-	Write-Host $url
+	
 	$html = Invoke-WebRequest -Uri $url
 	$currentId = GetId $url
+	Write-Host -NoNewLine "."
 	
 	$links = $html.Links.href
 	$validLinks = @()
@@ -112,8 +114,6 @@ Function BreakDown {
 		[string] $idDst  # Array of the other side (src <-> dst)
 	)
 	
-	Write-Host ("Starting {0}..." -f $num)
-	
 	$arrVal = $arr.Value
 	
 	if($num -eq 0) {  # @("t0") => @("t0", @("t00", "t01"))
@@ -121,7 +121,6 @@ Function BreakDown {
 		$arrVal = $arrVal[0],@((GetIds $url))
 		foreach($item in $arrVal[1]) {
 			If($item -eq $idDst) {
-				Write-Host ("Almost done: {0}" -f $item)
 				Return $True
 			}
 		}
@@ -131,7 +130,6 @@ Function BreakDown {
 			$arrVal[1][$i] = $arrVal[1][$i], @((GetIds $url))
 			foreach($item in $arrVal[1][$i][1]) {
 				if($item -eq $idDst) {
-					Write-Host ("Almost done: {0}" -f $item)
 					Return $True
 				} #else { Write-Host("{0} <> {1}" -f $item, $idDst) }
 			}
@@ -143,7 +141,7 @@ Function BreakDown {
 	Return $False
 }
 
-
+# Returns an array with the IDs related to a valid route
 Function GetLinkedRoute {
 	Param (
 		[string] $srcId,
@@ -167,14 +165,14 @@ Function GetLinkedRoute {
 	return $null
 }
 
-
+# -----
 # Main
+# -----
+
 $lang = GetLanguage $srcUrl
 
-Write-Host ("Origen: {0}`nDestino: {1}" -f $srcUrl, $dstUrl)
+Write-Host ("`nSource: {0}`nDestination: {1}" -f $srcUrl, $dstUrl)
 
-#$src = @((GetId $srcUrl), (GetIds $srcUrl))
-#$dst = @((GetId $dstUrl), (GetIds $dstUrl)) 
 $srcId = (GetId $srcUrl).toLower()
 $dstId = (GetId $dstUrl).toLower()
 $routes = @($srcId)
@@ -182,19 +180,14 @@ $routes = @($srcId)
 $lvl = 0
 $linked = $False
 while(-Not $linked -And $lvl -lt 5) {
+	Write-Host -NoNewLine ("`nSearching in level {0}" -f $lvl)
 	$linked = (BreakDown $lvl ([ref]$routes) $dstId)
-	$linked
 	$lvl++
 }
 
 if($linked) {
 	$vRoute = GetLinkedRoute $srcId $dstId $routes
-	Write-Host ("Link found: {0}" -f ($vRoute -join " -> "))
+	Write-Host ("`n`nLink found: {0}`n" -f ($vRoute -join " -> "))
 } else {
-	Write-Host ("Link not found ({0} levels)" -f $lvl)
+	Write-Host ("`n`nLink not found ({0} levels)`n" -f $lvl)
 }
-
-$routes.Length
-
-
-
