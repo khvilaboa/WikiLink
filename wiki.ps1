@@ -6,8 +6,8 @@
 #>
 
 Param (
-	[string] $srcUrl = "http://es.wikipedia.org/wiki/Gelatina",
-	[string] $dstUrl = "https://es.wikipedia.org/wiki/Sustancia"
+	[string] $srcUrl = "https://es.wikipedia.org/wiki/Jalea",
+	[string] $dstUrl = "https://es.wikipedia.org/wiki/Turismo"
 )
 
 # ----------
@@ -19,6 +19,7 @@ Function GetIds {
 		[string] $url
 	)
 	
+	#Write-Host $url
 	$html = Invoke-WebRequest -Uri $url
 	$currentId = GetId $url
 	Write-Host -NoNewLine "."
@@ -27,10 +28,10 @@ Function GetIds {
 	$validLinks = @()
 	$cont = 0
 	foreach($link in $links) {
-		if($link -match "^/wiki/(\w*)$" -And -Not $link.toLower().Contains($currentId) -And -Not $link.EndsWith("Wikimedia_Commons") -And -Not $link.EndsWith("Wikcionario")) {
+		if($link -match "^/wiki/([\w-]*)$" -And -Not $link.toLower().Contains($currentId) -And -Not $link.EndsWith("Wikimedia_Commons") -And -Not $link.EndsWith("Wikcionario")) {
 			$newLink = $matches[1]
 			if(-Not $validLinks.Contains($newLink)) {
-				$validLinks += $newLink.toLower()
+				$validLinks += $newLink
 				$cont++
 			}
 		}
@@ -47,8 +48,8 @@ Function GetId {
 		[string] $url
 	)
 	
-	if($url -match "/(\w*)$") {
-		Return $matches[1].toLower()
+	if($url -match "/([\w-]*)$") {
+		Return $matches[1]
 	} else {
 		Return $null
 	}
@@ -114,6 +115,7 @@ Function BreakDown {
 		[string] $idDst  # Array of the other side (src <-> dst)
 	)
 	
+	Write-Host ("Starting {0}" -f $num)
 	$arrVal = $arr.Value
 	
 	if($num -eq 0) {  # @("t0") => @("t0", @("t00", "t01"))
@@ -124,6 +126,7 @@ Function BreakDown {
 				Return $True
 			}
 		}
+		
 	} elseif($num -eq 1) { # @("t0", @("t00", "t01")) => @("t0", @(@("t00", @("t000", "t001")), @("t01", @("t010", "t011"))))
 		for($i=0; $i -lt $arrVal[1].Length; $i++) {
 			$url = "http://{0}.wikipedia.org/wiki/{1}" -f $lang, $arrVal[1][$i]
@@ -133,11 +136,17 @@ Function BreakDown {
 					Return $True
 				} #else { Write-Host("{0} <> {1}" -f $item, $idDst) }
 			}
-			
 		}	
+	} else { # Level two or higher
+		for($i=0; $i -lt $arrVal[1].Length; $i++) {
+			if($arrVal[1][$i].getType().name -ne "String") {
+				Write-Host ("Down... {0}" -f $arrVal[1][$i][0])
+				BreakDown ($num-1) ([ref]$arrVal[1][$i]) $dstId
+			}
+		}
 	}
-	
 	$arr.Value = $arrVal
+	
 	Return $False
 }
 
@@ -173,8 +182,8 @@ $lang = GetLanguage $srcUrl
 
 Write-Host ("`nSource: {0}`nDestination: {1}" -f $srcUrl, $dstUrl)
 
-$srcId = (GetId $srcUrl).toLower()
-$dstId = (GetId $dstUrl).toLower()
+$srcId = GetId $srcUrl
+$dstId = GetId $dstUrl
 $routes = @($srcId)
 
 $lvl = 0
